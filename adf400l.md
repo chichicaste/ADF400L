@@ -892,17 +892,21 @@ The meter number can be set by communication, the meter number connected to the 
 
 ### Table 1 — DI/DO bit map (0x094E Switch DI state / 0x094F Switch DO status)
 
-| Bit position | 9~16 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 |
-|:-------------|:----:|::|::|::|::|::|::|::|::|
-| **0x094E** | Reserved | | | | | | DI2 | DI1 |
-| **0x094F** | Reserved | | | | | | DO2 | DO1 |
+| Register (bit) | 9~16 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 |
+|:---------------|:----:|:-:|:-:|:-:|:-:|:-:|:-:|:---:|:---:|
+| **0x094E** | Reserved | | | | | | | DI2 | DI1 |
+| **0x094F** | Reserved | | | | | | | DO2 | DO1 |
+
+> Bits 9–16 are Reserved; bits 3–8 are unused (blank). 0x094E reports the main-module digital-input state (bit 1 = DI1, bit 2 = DI2); 0x094F reports/sets the digital-output state (bit 1 = DO1, bit 2 = DO2).
 
 ### Table 2 — Switch Area Control Word (0x1800–0x1801)
 
-| Bit position | 9~16 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 |
-|:-------------|:----:|::|::|::|::|::|::|::|::|
-| **0x1800** | Reserved | | | | | | | DI1 |
-| **0x1801** | Reserved | | | | | | DO2 | DO1 |
+| Register (bit) | 9~16 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 |
+|:---------------|:----:|:-:|:-:|:-:|:-:|:-:|:-:|:---:|:---:|
+| **0x1800** | Reserved | | | | | | | | DI1 |
+| **0x1801** | Reserved | | | | | | | DO2 | DO1 |
+
+> In the original manual both rows of Table 2 are mislabelled "1800H"; per the register map (§9.4 *Switch area*) the second row is **0x1801**. The 0x1800 DI row shows only **DI1** at bit 1 (bit 2 blank).
 
 ---
 
