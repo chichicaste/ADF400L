@@ -17,12 +17,15 @@ Se comunica vía **RS485 (MODBUS-RTU)** o **Ethernet (Modbus-TCP)**. Este proyec
 
 | Archivo / Directorio | Descripción |
 |:---------------------|:------------|
-| `adf400l.md` | Documentación completa del manual V1.2 convertida a Markdown (especificaciones, cableado, funciones, mapa de registros Modbus, menú de programación LCD) |
+| `adf400l.md` | Documentación completa del manual **V1.8** convertida a Markdown (especificaciones, cableado, funciones, mapa de registros Modbus, menú de programación LCD) |
 | `adf400l.pdf` | Manual original en PDF |
 | `images/` | Diagramas de cableado, dimensiones, pantallas LCD y displays de teclas (17 imágenes) |
 | `db/` | Base de datos SQLite con el mapa de registros Modbus, especificaciones, menús y códigos de error |
 | `db/build.py` | Script para reconstruir la base de datos desde `adf400l.md` |
 | `db/README.md` | Documentación de la base de datos y ejemplos de consulta SQL |
+| `docs/tarifa_electrica_el_salvador.md` | Ecuaciones y datos técnicos de la tarifa salvadoreña (SIGET) y su mapeo a los registros del medidor |
+| `write_tariff_es.py` | Programa la tarifa El Salvador (precios + calendario Punta/Resto/Valle) en el medidor; **dry-run por defecto**, escribe solo con `--commit` |
+| `change.md` | **Bitácora de cambios** en el medidor físico (valores originales y nuevos) para trazabilidad y rollback |
 | `probe_read.py` | Script de prueba de lectura Modbus-TCP (sondeo rápido) |
 | `probe_detail.py` | Lectura detallada del área de parámetros del sistema y datos trifásicos |
 | `read_config.py` | Lee y decodifica la configuración del sistema (parámetros de comunicación, red, CT/PT) |
@@ -31,13 +34,17 @@ Se comunica vía **RS485 (MODBUS-RTU)** o **Ethernet (Modbus-TCP)**. Este proyec
 
 ```
 ADF400L/
-├── adf400l.md              # Documentación técnica (manual V1.2)
+├── adf400l.md              # Documentación técnica (manual V1.8)
 ├── adf400l.pdf             # Manual original PDF
 ├── README.md               # Este archivo
+├── change.md               # Bitácora de cambios en el medidor (trazabilidad/rollback)
 ├── LICENSE                 # Licencia MIT
 ├── read_config.py          # Lector de configuración Modbus
 ├── probe_read.py           # Sonda de lectura rápida
 ├── probe_detail.py         # Lectura detallada del dispositivo
+├── write_tariff_es.py      # Programador de tarifa El Salvador (dry-run por defecto)
+├── docs/
+│   └── tarifa_electrica_el_salvador.md   # Tarifa SIGET: ecuaciones y mapeo a registros
 ├── images/                 # Diagramas e imágenes
 │   ├── adf400l_img-000.jpeg ... adf400l_img-016.jpeg
 │   └── adf400l_keydisp_1.png ... adf400l_keydisp_5.png
@@ -78,6 +85,23 @@ python probe_detail.py
 python db/build.py
 ```
 
+### Programar la tarifa El Salvador en el medidor
+
+`write_tariff_es.py` carga los precios multitarifa y, opcionalmente, el calendario
+Punta/Resto/Valle. **No escribe nada salvo `--commit`**, verifica por relectura y no toca
+modo/dirección/red. Cada cambio queda registrado en `change.md`.
+
+```bash
+# Ver el plan sin escribir (seguro):
+python write_tariff_es.py --host 192.168.0.20 --unit 1 --phase three --tariff gd_bt
+
+# Escribir precios + calendario horario:
+python write_tariff_es.py --unit 1 --phase three --tariff gd_bt --with-schedule --commit
+```
+
+Ver `docs/tarifa_electrica_el_salvador.md` para tarifas, ecuaciones y detalles, y `change.md`
+para la bitácora de cambios aplicados al dispositivo.
+
 ## Base de datos SQLite
 
 La base de datos `db/adf400l.db` contiene el mapa de registros Modbus completo con direcciones, escalas, unidades, tipos de dato, y tablas auxiliares (enumeraciones, campos de bits, menú de programación, códigos de error).
@@ -94,7 +118,7 @@ Ver `db/README.md` para el esquema y ejemplos de consulta.
 ## Copyright
 
 - **Codigo y herramientas** — (c) 2026 [@chichicaste](https://github.com/chichicaste) — Licencia MIT.
-- **Documentacion tecnica** — (c) Acrel Electric Co., Ltd. Manual de instalacion y operacion V1.2. Todos los derechos reservados.
+- **Documentacion tecnica** — (c) Acrel Co., Ltd. Manual de instalacion y operacion V1.8. Todos los derechos reservados.
 
 ## Licencia
 

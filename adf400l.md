@@ -1,10 +1,10 @@
 # ADF400L Series Multi User Electric Energy Meter
 
-## Installation and Operation Manual V1.2
+## Installation and Operation Manual V1.8
 
 ---
 
-**Acrel Electric Co., Ltd**
+**Acrel Co., Ltd.**
 
 ---
 
@@ -30,8 +30,8 @@ Acrel reserves the right to modify the product specifications herein without not
 | 6 | Wiring and installation | 6 |
 | 7 | Function Description | 9 |
 | 8 | Show description | 10 |
-| 9 | Communication description | 16 |
-| 10 | Common troubleshooting | 37 |
+| 9 | Communication description | 17 |
+| 10 | Common troubleshooting | 36 |
 
 ---
 
@@ -90,7 +90,7 @@ ADF400L-□H□S□D□-□
 | Measurement | Two-way three-phase 3×1(6) A measurement can be realized |
 | Pulse output | 2 active energy pulse output |
 | LED indication | 2 three-phase working status, pulse and communication status LED indication |
-| DI/DO | Up to 4DI/4DO function (K function) |
+| DI/DO | Up to 2DI/4DO function (K function) |
 
 ---
 
@@ -149,7 +149,7 @@ ADF400L-□H□S□D□-□
 | Pulse constant | 3×1(6)A specification: 6400 imp/kWh; 3×10(80)A specification: 400 imp/kWh |
 | **Switch** | |
 | Main module | Main module 2DI+2DO. Among them, DI is dry contact input |
-| Slave module | Transformer access slave module 4DI+4DO. Among them, DI is 220V wet contact input |
+| Slave module | Transformer access slave module 2DI+4DO. Among them, DI is 220V wet contact input |
 | **Communication** | |
 | Infrared interface | Infrared communication |
 | RS485 interface | MODBUS-RTU |
@@ -940,19 +940,9 @@ The meter number can be set by communication, the meter number connected to the 
 
 ## Headquarters
 
-**Acrel Co., LTD.**
+**Acrel Co., Ltd.**
 Address: No.253 Yulv Road, Jiading District, Shanghai, China
-TEL.: 0086-21-69158338 / 0086-21-69156052 / 0086-21-59156392 / 0086-21-69156971
-Fax: 0086-21-69158303
-Web-site: [www.acrel-electric.com](http://www.acrel-electric.com)
-E-mail: ACREL008@vip.163.com
+TEL.: +86 178 2110 1655
+Web-site: [www.acrel-group.com](http://www.acrel-group.com)
+E-mail: Lynn@acrel-electric.com
 Postcode: 201801
-
-## Manufacturer
-
-**Jiangsu Acrel Electrical Manufacturing Co., LTD.**
-Address: No.5 Dongmeng Road, Dongmeng Industrial Park, Nanzha Street, Jiangyin City, Jiangsu Province, China
-TEL./Fax: 0086-510-86179970
-Web-site: [www.jsacrel.com](http://www.jsacrel.com)
-Postcode: 214405
-E-mail: JY-ACREL001@vip.163.com

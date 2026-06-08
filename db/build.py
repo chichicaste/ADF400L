@@ -152,6 +152,23 @@ CREATE TABLE modbus_function (
     usage       TEXT,
     source      TEXT
 );
+
+-- Standard Modbus exception codes (for app-layer error handling; not from manual).
+CREATE TABLE modbus_exception (
+    code        TEXT PRIMARY KEY,      -- exception code (hex)
+    name        TEXT NOT NULL,
+    meaning     TEXT,
+    source      TEXT
+);
+
+-- External reference documents / repositories useful for development.
+CREATE TABLE reference (
+    id          INTEGER PRIMARY KEY,
+    title       TEXT NOT NULL,
+    url         TEXT NOT NULL,
+    kind        TEXT,                  -- manual | repo | integration | datasheet
+    note        TEXT
+);
 """
 
 
@@ -1010,7 +1027,7 @@ def main():
         (
             "source_document",
             "adf400l.md",
-            "ADF400L Installation and Operation Manual V1.2 (Acrel)",
+            "ADF400L Installation and Operation Manual V1.8 (Acrel)",
         ),
         (
             "transport_rs485",
@@ -1041,11 +1058,11 @@ def main():
         (
             "32bit_word_order",
             "BIG (high word first)",
-            "CONFIRMED on test device 192.168.10.121: 0x0352=[0,107]=1.07 kWh (low-word-first gives nonsense). value = (regs[0]<<16)|regs[1].",
+            "CONFIRMED on test device: 0x0352=[0,107]=1.07 kWh (low-word-first gives nonsense). value = (regs[0]<<16)|regs[1].",
         ),
         (
             "validated_against",
-            "192.168.10.121 unit-id 1 (read-only, 2026-06)",
+            "the test device unit-id 1 (read-only, 2026-06)",
             "Verified scaling, signed 'I' type (Q=-2), 32-bit word order, and config registers.",
         ),
         (
@@ -1093,6 +1110,16 @@ def main():
             "12 three-phase OR 36 single-phase OR 12 transformer (2-way) circuits",
             "Module-combination maximum (sec. 1 / 2)",
         ),
+        (
+            "multirate_period_table_encoding",
+            "byte-packed Period,Hour,Minute; rate idx 1=tip 2=peak 3=flat 4=valley",
+            "VALIDATED on the test device (2026-06). Tables 0x0914 (1) and 0x0929 (2), 21 regs = 14 slots x 3 fields, 2 fields/register (hi byte, lo byte), stream P1,H1,M1,P2,...  Rate index is 1-based: 1=tip,2=peak,3=flat,4=valley (same order as price regs 0x0537.. and LCD F1-F4). Seasonal selector 0x093E alternates tables 1/2, so write the same schedule to both. El Salvador calendar loaded: 00:00 valley, 05:00 flat(resto), 18:00 peak(punta), 23:00 valley.",
+        ),
+        (
+            "status_word_bits",
+            "0x0369 normal=0x0300 (bits 9,10); bit1/2 NOT relay; not fully mapped",
+            "Undocumented by Acrel. READ-ONLY probe of the test device (2026-06, METERING mode): both transformer users (uid 1,4) read 0x0369=0x0300 (bits 9&10 set) while energized (116.6 V, relays closed); bits 1/2 = 0 -> the bit-1 relay/trip hypothesis is DISPROVEN. The relay/trip bit could not be located read-only: metering type has no prepaid trip and both relays were closed, so no contrasting 'tripped' state existed. To finish: use a PREPAID unit (0x0908 high byte=0) and contrast a tripped vs closed user, or toggle the strong-control word (0x0801/0x0804) on a writable unit and diff 0x0369. 0x0311 not observed (no single-phase users on the test device).",
+        ),
     ]
     cur.executemany("INSERT INTO metadata(key,value,note) VALUES (?,?,?)", meta)
 
@@ -1103,8 +1130,8 @@ def main():
         (
             "ADF400L-HSD(Y)",
             "ADF400L Series Multi User Electric Energy Meter",
-            "V1.2",
-            "Jiangsu Acrel Electrical Manufacturing Co., Ltd",
+            "V1.8",
+            "Acrel Co., Ltd.",
             "Multi-user meter: up to 12 three-phase or 36 single-phase direct-access, "
             "or 12 three-phase transformer (CT) access; metering or prepaid type.",
         ),
@@ -1143,7 +1170,7 @@ def main():
         (
             "Switch",
             "Slave module",
-            "Transformer slave 4DI+4DO (DI 220V wet contact)",
+            "Transformer slave 2DI+4DO (DI 220V wet contact)",
             None,
         ),
         ("Communication", "Infrared interface", "Infrared communication", None),
@@ -1555,6 +1582,26 @@ def main():
         ("0x1800", 1, "DI1", "Live switch DI1 (Table 2)"),
         ("0x1801", 1, "DO1", "Live switch DO1 (Table 2)"),
         ("0x1801", 2, "DO2", "Live switch DO2 (Table 2)"),
+        # --- Status words (0x0311 single-phase / 0x0369 running) ---
+        # Bit meanings are NOT documented by Acrel. The rows below record a
+        # READ-ONLY probe of test device (2026-06, metering mode).
+        # DISPROVEN: bit 1 and bit 2 are NOT the relay/trip bit - both read 0
+        # while the relays were closed and the users energized (116.6 V present).
+        # No 'tripped' sample was obtainable read-only (metering type => no
+        # prepaid relay action; both relays closed), so the relay bit, if any,
+        # could not be located. See metadata.status_word_bits.
+        (
+            "0x0369",
+            9,
+            "(set in normal/energized state)",
+            "OBSERVED set: 0x0369=0x0300 (bits 9 & 10) on energized transformer users, 3P4L metering mode. Meaning unconfirmed; bit1/2 confirmed NOT relay.",
+        ),
+        (
+            "0x0369",
+            10,
+            "(set in normal/energized state)",
+            "OBSERVED set together with bit 9 (value 0x0300) on energized transformer users. Meaning unconfirmed.",
+        ),
     ]
     cur.executemany(
         "INSERT INTO bitfield(register_hex,bit_position,signal,description) VALUES (?,?,?,?)",
@@ -1694,6 +1741,12 @@ def main():
             "Read measurement/config registers",
             "Modbus standard",
         ),
+        (
+            "0x04",
+            "Read Input Registers",
+            "Mirrors 0x03 on this device (confirmed on test unit); same address map",
+            "Modbus standard",
+        ),
         ("0x06", "Write Single Register", "Write one R/W register", "Modbus standard"),
         (
             "0x10",
@@ -1704,6 +1757,51 @@ def main():
     ]
     cur.executemany(
         "INSERT INTO modbus_function(code,name,usage,source) VALUES (?,?,?,?)", fcs
+    )
+
+    # ---- modbus exception codes (standard; for app-layer error handling) ----
+    excs = [
+        ("0x01", "Illegal Function", "Function code not supported by the slave", "Modbus standard"),
+        ("0x02", "Illegal Data Address", "Register address not allowed / out of range for this device", "Modbus standard"),
+        ("0x03", "Illegal Data Value", "Value in the query data field is not allowed", "Modbus standard"),
+        ("0x04", "Slave Device Failure", "Unrecoverable error while processing the request", "Modbus standard"),
+        ("0x05", "Acknowledge", "Request accepted, long-duration processing in progress", "Modbus standard"),
+        ("0x06", "Slave Device Busy", "Slave busy; retry the request later", "Modbus standard"),
+        ("0x0B", "Gateway Target Device Failed to Respond", "No response from target behind a gateway (relevant for RTU-over-TCP forwarders)", "Modbus standard"),
+    ]
+    cur.executemany(
+        "INSERT INTO modbus_exception(code,name,meaning,source) VALUES (?,?,?,?)", excs
+    )
+
+    # ---- external references (for future development) ----
+    refs = [
+        (
+            "ADF400L Installation and Operation Manual V1.8 (Acrel, 2025)",
+            "https://www.acrel-group.com/acrel-group/2025/07/22/adf400lmanual.pdf",
+            "manual",
+            "Official manual this DB is now aligned to. Register map identical to V1.2; V1.8 corrects the transformer slave to 2DI/4DO and updates contact info (status words still undefined).",
+        ),
+        (
+            "ricnsmart/acrel-modbus",
+            "https://github.com/ricnsmart/acrel-modbus",
+            "repo",
+            "Go implementation of Acrel's simplified (non-standard) framing / RF-card protocol. Not a register map.",
+        ),
+        (
+            "jibrilsharafi/modbus-database",
+            "https://github.com/jibrilsharafi/modbus-database",
+            "repo",
+            "Community Modbus register-table collection. ADF400L not yet present - candidate to contribute this DB.",
+        ),
+        (
+            "Home Assistant Modbus integration",
+            "https://www.home-assistant.io/integrations/modbus/",
+            "integration",
+            "pymodbus-based; the register table maps directly to HA sensor/switch YAML over Modbus-TCP (port via 0x0971).",
+        ),
+    ]
+    cur.executemany(
+        "INSERT INTO reference(title,url,kind,note) VALUES (?,?,?,?)", refs
     )
 
     con.commit()
